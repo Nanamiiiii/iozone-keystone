@@ -117,6 +117,7 @@ int atoi();
 int close();
 int unlink();
 int main();
+int _main();
 #if !defined(linux)
 int wait();
 #endif
@@ -361,9 +362,9 @@ THISVERSION,
 #define MAP_FAILED -1
 #endif
 
-#ifdef generic
-typedef long long off64_t;
-#endif
+//#ifdef generic
+//typedef long long off64_t;
+//#endif
 
 #if defined(__FreeBSD__)
 #define __off64_t_defined
@@ -1846,8 +1847,14 @@ void new_touch_dedup(char *, int);
 /****************************************************************/
 int negatives, positives;
 
+int main(void) {
+    char* argvec[7] = { "iozone","-a","-b","results.xls","-+s","-q1M","1024"};
+    int argcount = 7;
+    _main(argcount, argvec);
+}
+
 int
-main(argc,argv) 
+_main(argc,argv) 
 int argc;
 char **argv;
 {
@@ -9153,6 +9160,7 @@ long long *data1,*data2;
 				}
 			  }
 			}
+#ifdef ASYNC_IO
 			if(async_flag)
 			{
 				if(no_copy_flag)
@@ -9160,6 +9168,7 @@ long long *data1,*data2;
 				end_async(gc);
 				gc=0;
 			}
+#endif
 			buffer1=0;
 			if(hist_summary)
 			{
@@ -9634,6 +9643,7 @@ long long *data1, *data2;
 				}
 			  }
 			}
+#ifdef ASYNC_IO
 			if(async_flag)
 			{
 				if(no_copy_flag)
@@ -9641,6 +9651,7 @@ long long *data1, *data2;
 				end_async(gc);
 				gc=0;
 			}
+#endif
 			if(rlocking)
 			{
 				lock_offset=I_LSEEK(fd,0,SEEK_CUR);
@@ -10097,6 +10108,7 @@ long long *data1,*data2;
 				}
 			   }
 			}
+#ifdef ASYNC_IO
 			if(async_flag)
 			{
 				if(no_copy_flag)
@@ -10104,6 +10116,7 @@ long long *data1,*data2;
 				end_async(gc);
 				gc=0;
 			}
+#endif
 			if(rlocking)
 			{
 				mylockr((int) fd, (int) 0, (int)1,
@@ -10749,6 +10762,7 @@ printf("Read_Stride\n");
 			   }
 			}
 		}
+#ifdef ASYNC_IO
 		if(async_flag)
 		{
 			if(no_copy_flag)
@@ -10756,6 +10770,7 @@ printf("Read_Stride\n");
 			end_async(gc);
 			gc=0;
 		}
+#endif
 			
 		/* This is a bit tricky.  The goal is to read with a stride through
 		   the file. The problem is that you need to touch all of the file
@@ -15485,6 +15500,7 @@ thread_read_test(x)
 			   }
 		   }
 		}
+#ifdef ASYNC_IO
 		if(async_flag)
 		{
 			if(no_copy_flag)
@@ -15492,6 +15508,7 @@ thread_read_test(x)
 			end_async(gc);
 			gc=0;
 		}
+#endif
 		read_so_far+=reclen/1024;
 		r_traj_bytes_completed+=reclen;
 		r_traj_ops_completed++;
@@ -16665,6 +16682,7 @@ thread_rread_test(x)
 			}
 		   }
 		}
+#ifdef ASYNC_IO
 		if(async_flag)
 		{
 			if(no_copy_flag)
@@ -16672,6 +16690,7 @@ thread_rread_test(x)
 			end_async(gc);
 			gc=0;
 		}
+#endif
 		re_read_so_far+=reclen/1024;
 		r_traj_bytes_completed+=reclen;
 		r_traj_ops_completed++;
@@ -17244,6 +17263,7 @@ thread_reverse_read_test(x)
 			  lock_offset, reclen);
 		}
 		current_position+=reclen;
+#ifdef ASYNC_IO
 		if(async_flag)
 		{
 			if(no_copy_flag)
@@ -17251,6 +17271,7 @@ thread_reverse_read_test(x)
 			end_async(gc);
 			gc=0;
 		}
+#endif
 		t_offset = (off64_t)reclen*2;
 		if (!(h_flag || k_flag || mmapflag))
 		{
@@ -17778,6 +17799,7 @@ thread_stride_read_test(x)
 			}
 		   }
 		}
+#ifdef ASYNC_IO
 		if(async_flag)
 		{
 			if(no_copy_flag)
@@ -17785,6 +17807,7 @@ thread_stride_read_test(x)
 			end_async(gc);
 			gc=0;
 		}
+#endif
 		if(current_position + (stride * reclen) >= (numrecs64 * reclen)-reclen) 
 		{
 			current_position=0;
@@ -18528,6 +18551,7 @@ void *x;
 			}
 		   }
 		}
+#ifdef ASYNC_IO
 		if(async_flag)
 		{
 			if(no_copy_flag)
@@ -18535,6 +18559,7 @@ void *x;
 			end_async(gc);
 			gc=0;
 		}
+#endif
 		ranread_so_far+=reclen/1024;
 		if(*stop_flag)
 		{

@@ -157,6 +157,12 @@ generic:	iozone_generic.o  libbif.o
 	$(CC)  -O $(LDFLAGS) iozone_generic.o libbif.o -o iozone
 
 #
+# RISC-V musl build with no threads, no largefiles, no async I/O
+#
+riscv_musl: iozone_riscv_musl.o libbif.o
+	$(CCRV) -O $(LDFLAGS) -static iozone_riscv_musl.o libbif.o -o iozone
+
+#
 # No ansii 'C' compiler HP build with no threads, no largefiles, no async I/O 
 #
 hpux_no_ansi-10.1:	iozone_hpux_no-10.1.o  libbif.o 
@@ -781,6 +787,15 @@ iozone_generic.o:	iozone.c libbif.c
 	$(CC) -c -O -Dgeneric -Dunix -DHAVE_ANSIC_C -DNO_THREADS \
 		-DNAME='"Generic"' $(CFLAGS) iozone.c -o iozone_generic.o
 	$(CC) -c -O -Dgeneric -Dunix -DHAVE_ANSIC_C -DNO_THREADS \
+		$(CFLAGS) libbif.c -o libbif.o
+
+iozone_riscv_musl.o: iozone.c libbif.c
+	@echo ""
+	@echo "Building iozone RISC-V + musl-libc (Generic)"
+	@echo ""
+	$(CCRV) -c -O -Dgeneric -Dunix -DHAVE_ANSIC_C -DNO_THREADS \
+		-DNAME='"RISC-V_musl"' $(CFLAGS) iozone.c -o iozone_riscv_musl.o
+	$(CCRV) -c -O -Dgeneric -Dunix -DHAVE_ANSIC_C -DNO_THREADS \
 		$(CFLAGS) libbif.c -o libbif.o
 
 iozone_hpux_no.o:	iozone.c libbif.c
