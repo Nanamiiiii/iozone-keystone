@@ -1,0 +1,4 @@
+*.o
+iozone
+pit_server
+fileop
