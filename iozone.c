@@ -117,7 +117,7 @@ int atoi();
 int close();
 int unlink();
 int main();
-int _main();
+int _main(int argc, char **argv);
 #if !defined(linux)
 int wait();
 #endif
@@ -431,6 +431,7 @@ typedef long long off64_t;
 #endif
 
 #include <sys/time.h>
+#include <time.h>
 
 #ifdef SHARED_MEM
 #include <sys/shm.h>
@@ -500,6 +501,13 @@ int no_connect(int,  const struct sockaddr *, socklen_t);
 int no_kill(pid_t, int );
 #endif
 
+#ifdef ADM_MALLOC
+#include "app/syscall.h"
+#include "edge/adm.h"
+#include "edge/adm_alloc.h"
+#define malloc(x) adm_malloc(x)
+#define free(x) adm_free(x)
+#endif
 
 /*
  * In multi thread/process throughput mode each child keeps track of
@@ -1848,8 +1856,16 @@ void new_touch_dedup(char *, int);
 int negatives, positives;
 
 int main(void) {
-    char* argvec[7] = { "iozone","-a","-b","results.xls","-+s","-q1M","1024"};
+    char* argvec[7] = {"iozone","-a","-b","results.xls","-+s","-q1M","1024"};
     int argcount = 7;
+#ifdef ADM_MALLOC
+    ADMERR ret;
+    size_t size;
+    uintptr_t ptr = map_adm(&size);
+    adm_init_internals(ptr, size);
+    ret = adm_dynalloc_init(12 * 1024 * 1024);
+    if (!ret) return -1;
+#endif
     _main(argcount, argvec);
 }
 
@@ -7323,6 +7339,12 @@ time_so_far()
   return (( (double) (gp.tv_sec)) +
     ( ((float)(gp.tv_nsec)) * 0.000000001 ));
 #else
+#if defined (RISCV_RTC_1M)
+  unsigned long rtc_cycle;
+  unsigned long clk = 1000000;
+  __asm__ __volatile__ ("rdtime %0" : "=r"(rtc_cycle));
+  return ((double) rtc_cycle) / clk;
+#else
   struct timeval tp;
 
   if(pit_hostname[0]){
@@ -7336,6 +7358,7 @@ time_so_far()
          perror("gettimeofday");
   	 return ((double) (tp.tv_sec)) + (((double) tp.tv_usec) * 0.000001 );
   }
+#endif
 #endif
 #endif
 }
@@ -20318,6 +20341,12 @@ time_so_far1()
   return (( (double) (gp.tv_sec)*1000000.0) +
     ( ((float)(gp.tv_nsec)) * 0.001 ));
 #else
+#if defined (RISCV_RTC_1M)
+  unsigned long rtc_cycle;
+  unsigned long clk = 1000000;
+  __asm__ __volatile__ ("rdtime %0" : "=r"(rtc_cycle));
+  return ((double) rtc_cycle) / clk;
+#else
   struct timeval tp;
 
   if(pit_hostname[0]){
@@ -20332,6 +20361,7 @@ time_so_far1()
         perror("gettimeofday");
      return ((double) (tp.tv_sec)*1000000.0) + (((double) tp.tv_usec) );
   }
+#endif
 #endif
 #endif
 }
@@ -25373,7 +25403,7 @@ int main(void)
 int false = 0;
 int true = 1;
 #else
-typedef enum { false = 0, true } boolean;
+//typedef enum { false = 0, true } boolean;
 #endif
 typedef struct sockaddr_in       sockaddr_in_t;
 typedef struct sockaddr_in6      sockaddr_in6_t;
