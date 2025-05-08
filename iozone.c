@@ -227,6 +227,7 @@ char *help[] = {
 "           -+B Sequential mixed workload.",
 #if defined(O_DSYNC)
 "           -+D Enable O_DSYNC mode.",
+
 #endif
 #ifndef NO_MADVISE
 "           -+A #  Enable madvise. 0 = normal, 1=random, 2=sequential",
@@ -1856,15 +1857,38 @@ void new_touch_dedup(char *, int);
 int negatives, positives;
 
 int main(void) {
+#if ARGS_VARIANT == 0
+    // All benchmark sets, limit 1MiB record
     char* argvec[7] = {"iozone","-a","-b","results.xls","-+s","-q1M","1024"};
     int argcount = 7;
+#elif ARGS_VARIANT == 1
+    // All benchmark sets, no record limit
+    char* argvec[6] = {"iozone","-a","-b","results.xls","-+s","1024"};
+    int argcount = 6;
+#elif ARGS_VARIANT == 2
+    // only read/write benchmarks, limit 1MiB record
+    char* argvec[9] = {"iozone","-a","-i0","-i1","-b","results.xls","-+s","-q1M","1024"};
+    int argcount = 9;
+#elif ARGS_VARIANT == 3
+    // only read/write benchmarks, no record limit
+    char* argvec[8] = {"iozone","-a","-i0","-i1","-b","results.xls","-+s","1024"};
+    int argcount = 8;
+#else
+    // All benchmark sets, limit 1MiB record (fallback)
+    char* argvec[7] = {"iozone","-a","-b","results.xls","-+s","-q1M","1024"};
+    int argcount = 7;
+#endif
 #ifdef ADM_MALLOC
     ADMERR ret;
     size_t size;
+    size_t adm_alloc_region_size = 48 * 1024 * 1024;
     uintptr_t ptr = map_adm(&size);
+    if (ptr == (uintptr_t)-1) return -1;
     adm_init_internals(ptr, size);
-    ret = adm_dynalloc_init(12 * 1024 * 1024);
-    if (!ret) return -1;
+    ret = adm_dynalloc_init(adm_alloc_region_size);
+    if (ret) return -1;
+    printf("[IOzone Keystone] ADM initialized: ptr 0x%lx, size %lu byte(s)\n", ptr, size);
+    printf("[IOzone Keystone] ADM dynalloc initialized: %lu byte(s)\n", adm_alloc_region_size);
 #endif
     _main(argcount, argvec);
 }
@@ -7344,6 +7368,11 @@ time_so_far()
   unsigned long clk = 1000000;
   __asm__ __volatile__ ("rdtime %0" : "=r"(rtc_cycle));
   return ((double) rtc_cycle) / clk;
+#elif defined (RISCV_FU740)
+  unsigned long cycle;
+  unsigned long clk = 1200000000;
+  __asm__ volatile ("rdcycle %0" : "=r"(cycle));
+  return ((double) cycle) / clk;
 #else
   struct timeval tp;
 
